@@ -35,12 +35,11 @@ resource "azurerm_virtual_hub" "vwan_hub" {
     delete = "180m"
   }
 }
-#TODO: Implement right naming convention, using azurerm_virtual_hub in the meantime
 resource "azurecaf_name" "spp" {
   for_each = try(var.virtual_hub_config.security_partner_provider, {})
 
   name          = each.value.name
-  resource_type = "azurerm_virtual_hub"
+  resource_type = "azurerm_virtual_hub_security_partner_provider"
   prefixes      = var.global_settings.prefixes
   random_length = var.global_settings.random_length
   clean_input   = true
@@ -60,34 +59,33 @@ resource "azurerm_virtual_hub_security_partner_provider" "spp" {
   tags                   = var.tags
 }
 
-# #TODO: Implement right naming convention, using azurerm_virtual_hub in the meantime
-# resource "azurecaf_name" "vhub_connection" {
-#   for_each = try(var.virtual_hub_config.vnet_connections, {})
+resource "azurecaf_name" "vhub_connection" {
+  for_each = try(var.virtual_hub_config.vnet_connections, {})
 
-#   name          = each.value.name
-#   resource_type = "azurerm_virtual_hub"
-#   prefixes      = var.global_settings.prefixes
-#   random_length = var.global_settings.random_length
-#   clean_input   = true
-#   passthrough   = var.global_settings.passthrough
-#   use_slug      = var.global_settings.use_slug
-# }
-# resource "azurerm_virtual_hub_connection" "vhub_connection" {
-#   for_each = try(var.virtual_hub_config.vnet_connections, {})
+  name          = each.value.name
+  resource_type = "azurerm_virtual_hub_connection"
+  prefixes      = var.global_settings.prefixes
+  random_length = var.global_settings.random_length
+  clean_input   = true
+  passthrough   = var.global_settings.passthrough
+  use_slug      = var.global_settings.use_slug
+}
 
-#   name                      = azurecaf_name.vhub_connection[each.key].result
-#   virtual_hub_id            = azurerm_virtual_hub.vwan_hub.id
-#   remote_virtual_network_id = try(each.value.vnet_id, null) != null ? each.value.vnet_id : (lookup(each.value, "lz_key", null) == null ? var.virtual_networks[var.client_config.landingzone_key][each.value.vnet_key].id : var.virtual_networks[each.value.lz_key][each.value.vnet_key].id)
-#   internet_security_enabled = try(each.value.internet_security_enabled, null)
-# }
+resource "azurerm_virtual_hub_connection" "vhub_connection" {
+  for_each = try(var.virtual_hub_config.vnet_connections, {})
+
+  name                      = azurecaf_name.vhub_connection[each.key].result
+  virtual_hub_id            = azurerm_virtual_hub.vwan_hub.id
+  remote_virtual_network_id = try(each.value.vnet_id, null) != null ? each.value.vnet_id : (lookup(each.value, "lz_key", null) == null ? var.virtual_networks[var.client_config.landingzone_key][each.value.vnet_key].id : var.virtual_networks[each.value.lz_key][each.value.vnet_key].id)
+  internet_security_enabled = try(each.value.internet_security_enabled, null)
+}
 
 
-#TODO: Implement right naming convention, using azurerm_virtual_hub in the meantime
 resource "azurecaf_name" "hub_ip" {
   for_each = try(var.virtual_hub_config.hub_ip, {})
 
   name          = each.value.name
-  resource_type = "azurerm_virtual_hub"
+  resource_type = "azurerm_virtual_hub_ip"
   prefixes      = var.global_settings.prefixes
   random_length = var.global_settings.random_length
   clean_input   = true
@@ -105,12 +103,11 @@ resource "azurerm_virtual_hub_ip" "hub_ip" {
   subnet_id                    = try(each.value.subnet_id, null) != null ? each.value.subnet_id : (lookup(each.value.subnet, "lz_key", null) == null ? var.virtual_networks[var.client_config.landingzone_key][each.value.subnet.vnet_key].subnets[each.value.subnet.subnet_key].id : var.virtual_networks[each.value.subnet.lz_key][each.value.subnet.vnet_key].subnets[each.value.subnet.subnet_key].id)
 }
 
-#TODO: Implement right naming convention, using azurerm_virtual_hub in the meantime
 resource "azurecaf_name" "bgp_con" {
   for_each = try(var.virtual_hub_config.bgp_connection, {})
 
   name          = each.value.name
-  resource_type = "azurerm_virtual_hub"
+  resource_type = "azurerm_virtual_hub_bgp_connection"
   prefixes      = var.global_settings.prefixes
   random_length = var.global_settings.random_length
   clean_input   = true

@@ -110,7 +110,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
       # "Destination path for SSH public keys is currently limited to its default value /home/adminuser/.ssh/authorized_keys  due to a known issue in Linux provisioning agent."
       # username   = try(admin_ssh_key.value.username, each.value.admin_username)
       username   = each.value.admin_username
-      public_key = replace(data.external.ssh_public_key_id[admin_ssh_key.key].result.public_ssh_key, "\r\n", "")
+      public_key = replace(data.azurerm_ssh_public_key.ssh_public_key_id[admin_ssh_key.key].public_key, "\r\n", "")
     }
   }
 
@@ -124,7 +124,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
       # "Destination path for SSH public keys is currently limited to its default value /home/adminuser/.ssh/authorized_keys  due to a known issue in Linux provisioning agent."
       # username   = try(admin_ssh_key.value.username, each.value.admin_username)
       username   = each.value.admin_username
-      public_key = replace(data.external.secret_key_id[admin_ssh_key.key].result.public_ssh_key, "\r\n", "")
+      public_key = replace(data.azurerm_key_vault_secret.secret_key_id[admin_ssh_key.key].value, "\r\n", "")
     }
   }
 
@@ -138,7 +138,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
       # "Destination path for SSH public keys is currently limited to its default value /home/adminuser/.ssh/authorized_keys  due to a known issue in Linux provisioning agent."
       # username   = try(admin_ssh_key.value.username, each.value.admin_username)
       username   = each.value.admin_username
-      public_key = replace(data.external.ssh_secret_keyvault[admin_ssh_key.key].result.public_ssh_key, "\r\n", "")
+      public_key = replace(data.azurerm_key_vault_secret.ssh_secret_keyvault[admin_ssh_key.key].value, "\r\n", "")
     }
   }
 

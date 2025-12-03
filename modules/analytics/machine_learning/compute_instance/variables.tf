@@ -1,4 +1,15 @@
-variable "settings" {}
+variable "settings" {
+  description = "Configuration object for the machine learning compute instance"
+
+  validation {
+    condition = can(var.settings.computeInstanceName) ? (
+      can(regex("^[a-zA-Z][a-zA-Z0-9-]{1,22}[a-zA-Z0-9]$", var.settings.computeInstanceName)) &&
+      length(var.settings.computeInstanceName) >= 3 &&
+      length(var.settings.computeInstanceName) <= 24
+    ) : true
+    error_message = "Compute instance name is invalid. It can include letters, digits and dashes. It must start with a letter, end with a letter or digit, and be between 3 and 24 characters in length."
+  }
+}
 variable "global_settings" {
   description = "Global settings object (see module README.md)"
 }

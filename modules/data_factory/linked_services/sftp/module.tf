@@ -19,5 +19,20 @@ resource "azurerm_data_factory_linked_service_sftp" "linked_service_sftp" {
   host                     = var.host
   port                     = var.port
   username                 = var.username
-  password                 = var.password
+
+  # Password authentication (Basic)
+  password                 = var.authentication_type == "Basic" ? var.password : null
+
+  # SSH key authentication (SshPublicKey)
+  private_key_path         = var.authentication_type == "SshPublicKey" ? var.private_key_path : null
+  private_key_content      = var.authentication_type == "SshPublicKey" ? var.private_key_content : null
+  private_key_passphrase   = var.authentication_type == "SshPublicKey" ? var.private_key_passphrase : null
+  host_key_fingerprint     = var.authentication_type == "SshPublicKey" ? var.host_key_fingerprint : null
+
+  lifecycle {
+    precondition {
+      condition = var.authentication_type == "Basic" ? var.password != null : (var.private_key_path != null || var.private_key_content != null)
+      error_message = "When using 'Basic' authentication, password must be provided. When using 'SshPublicKey' authentication, either private_key_path or private_key_content must be provided."
+    }
+  }
 }
