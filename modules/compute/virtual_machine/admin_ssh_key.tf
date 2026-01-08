@@ -38,46 +38,33 @@ resource "azurerm_key_vault_secret" "ssh_public_key_openssh" {
 }
 
 
-data "external" "ssh_public_key_id" {
+# Native Terraform data sources to retrieve SSH keys (replaces external scripts)
+data "azurerm_ssh_public_key" "ssh_public_key_id" {
   for_each = {
     for key, value in try(var.settings.virtual_machine_settings[var.settings.os_type].admin_ssh_keys, {}) : key => value if can(value.ssh_public_key_id)
   }
 
-  program = [
-    "bash", "-c",
-    format(
-      "az sshkey show --ids '%s' --query '{public_ssh_key:publicKey}' -o json",
-      each.value.ssh_public_key_id
-    )
-  ]
+  # Extract resource name from ID (last part after /)
+  name                = split("/", each.value.ssh_public_key_id)[length(split("/", each.value.ssh_public_key_id)) - 1]
+  resource_group_name = split("/", each.value.ssh_public_key_id)[4]
 }
 
-data "external" "secret_key_id" {
+data "azurerm_key_vault_secret" "secret_key_id" {
   for_each = {
     for key, value in try(var.settings.virtual_machine_settings[var.settings.os_type].admin_ssh_keys, {}) : key => value if can(value.secret_key_id)
   }
 
-  program = [
-    "bash", "-c",
-    format(
-      "az keyvault secret show --id '%s' --query '{public_ssh_key:value}' -o json",
-      each.value.secret_key_id
-    )
-  ]
+  # Extract vault ID and secret name from full resource ID
+  key_vault_id = join("/", slice(split("/", each.value.secret_key_id), 0, 9))
+  name         = split("/", each.value.secret_key_id)[length(split("/", each.value.secret_key_id)) - 1]
 }
 
 # from keyvault
-data "external" "ssh_secret_keyvault" {
+data "azurerm_key_vault_secret" "ssh_secret_keyvault" {
   for_each = {
     for key, value in try(var.settings.virtual_machine_settings[var.settings.os_type].admin_ssh_keys, {}) : key => value if can(value.keyvault_key)
   }
 
-  program = [
-    "bash", "-c",
-    format(
-      "az keyvault secret show -n '%s' --vault-name '%s' --query '{public_ssh_key:value }' -o json",
-      each.value.secret_name,
-      var.keyvaults[try(each.value.lz_key, var.client_config.landingzone_key)][each.value.keyvault_key].name
-    )
-  ]
+  name         = each.value.secret_name
+  key_vault_id = var.keyvaults[try(each.value.lz_key, var.client_config.landingzone_key)][each.value.keyvault_key].id
 }

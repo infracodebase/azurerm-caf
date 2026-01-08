@@ -7,7 +7,7 @@ resource "azurerm_postgresql_server" "postgresql" {
   sku_name            = var.settings.sku_name
 
   administrator_login          = var.settings.administrator_login
-  administrator_login_password = try(var.settings.administrator_login_password, azurerm_key_vault_secret.postgresql_admin_password.0.value)
+  administrator_login_password = azurerm_key_vault_secret.postgresql_admin_password.0.value
 
   auto_grow_enabled                 = try(var.settings.auto_grow_enabled, false)
   storage_mb                        = try(var.settings.storage_mb, null)
@@ -15,7 +15,7 @@ resource "azurerm_postgresql_server" "postgresql" {
   create_mode                       = try(var.settings.create_mode, "Default")
   creation_source_server_id         = try(var.settings.creation_source_server_id, null)
   geo_redundant_backup_enabled      = try(var.settings.geo_redundant_backup_enabled, null)
-  infrastructure_encryption_enabled = try(var.settings.infrastructure_encryption_enableduto_grow_enabled, false)
+  infrastructure_encryption_enabled = try(var.settings.infrastructure_encryption_enabled, false)
   restore_point_in_time             = try(var.settings.restore_point_in_time, null)
   public_network_access_enabled     = try(var.settings.public_network_access_enabled, true)
   ssl_enforcement_enabled           = try(var.settings.ssl_enforcement_enabled, true)
@@ -42,9 +42,9 @@ resource "azurecaf_name" "postgresql" {
   passthrough   = var.global_settings.passthrough
 }
 
-# Generate postgresql server random admin password if not provided in the attribute administrator_login_password
+# Generate PostgreSQL server random admin password (always generated for security)
 resource "random_password" "postgresql_admin" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   length           = 128
   special          = true
@@ -55,7 +55,7 @@ resource "random_password" "postgresql_admin" {
 
 # Store the generated password into keyvault
 resource "azurerm_key_vault_secret" "postgresql_admin_password" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-password", azurecaf_name.postgresql.result)
   value        = random_password.postgresql_admin.0.result
@@ -69,7 +69,7 @@ resource "azurerm_key_vault_secret" "postgresql_admin_password" {
 }
 
 resource "azurerm_key_vault_secret" "sql_admin" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-username", azurecaf_name.postgresql.result)
   value        = var.settings.administrator_login
@@ -77,7 +77,7 @@ resource "azurerm_key_vault_secret" "sql_admin" {
 }
 
 resource "azurerm_key_vault_secret" "postgresql_admin_login_name" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-login-name", azurecaf_name.postgresql.result)
   value        = format("%s@%s", var.settings.administrator_login, azurerm_postgresql_server.postgresql.fqdn)
@@ -85,7 +85,7 @@ resource "azurerm_key_vault_secret" "postgresql_admin_login_name" {
 }
 
 resource "azurerm_key_vault_secret" "postgresql_fqdn" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-fqdn", azurecaf_name.postgresql.result)
   value        = azurerm_postgresql_server.postgresql.fqdn

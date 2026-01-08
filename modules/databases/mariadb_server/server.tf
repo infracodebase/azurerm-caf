@@ -4,7 +4,7 @@ resource "azurerm_mariadb_server" "mariadb" {
   resource_group_name = local.resource_group_name
 
   administrator_login          = var.settings.administrator_login
-  administrator_login_password = try(var.settings.administrator_login_password, azurerm_key_vault_secret.mariadb_admin_password.0.value)
+  administrator_login_password = azurerm_key_vault_secret.mariadb_admin_password.0.value
 
   sku_name   = var.settings.sku_name
   storage_mb = var.settings.storage_mb
@@ -21,9 +21,9 @@ resource "azurerm_mariadb_server" "mariadb" {
   tags                             = local.tags
 }
 
-# Generate mariadb server random admin password if not provided in the attribute administrator_login_password
+# Generate MariaDB server random admin password (always generated for security)
 resource "random_password" "mariadb_admin" {
-  count            = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count            = 1
   length           = 32
   special          = true
   upper            = true
@@ -34,7 +34,7 @@ resource "random_password" "mariadb_admin" {
 
 # Store the generated password into keyvault
 resource "azurerm_key_vault_secret" "mariadb_admin_password" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-password", azurecaf_name.mariadb.result)
   value        = random_password.mariadb_admin.0.result
@@ -48,7 +48,7 @@ resource "azurerm_key_vault_secret" "mariadb_admin_password" {
 }
 
 resource "azurerm_key_vault_secret" "mariadb_admin" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-username", azurecaf_name.mariadb.result)
   value        = var.settings.administrator_login
@@ -56,7 +56,7 @@ resource "azurerm_key_vault_secret" "mariadb_admin" {
 }
 
 resource "azurerm_key_vault_secret" "mariadb_admin_login_name" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-login-name", azurecaf_name.mariadb.result)
   value        = format("%s@%s", var.settings.administrator_login, azurerm_mariadb_server.mariadb.fqdn)
@@ -64,7 +64,7 @@ resource "azurerm_key_vault_secret" "mariadb_admin_login_name" {
 }
 
 resource "azurerm_key_vault_secret" "mariadb_fqdn" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-fqdn", azurecaf_name.mariadb.result)
   value        = azurerm_mariadb_server.mariadb.fqdn

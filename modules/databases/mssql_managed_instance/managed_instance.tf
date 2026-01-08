@@ -27,9 +27,9 @@ resource "azurerm_resource_group_template_deployment" "mssqlmi" {
   }
 }
 
-# Generate sql server random admin password if not provided in the attribute administrator_login_password
+# Generate SQL managed instance random admin password (always generated for security)
 resource "random_password" "sqlmi_admin" {
-  count = try(var.settings.administratorLoginPassword, null) == null ? 1 : 0
+  count = 1
 
   length           = 128
   special          = true
@@ -56,7 +56,7 @@ resource "azurerm_key_vault_secret" "sqlmi_admin_password" {
 
 # to support keyvault in a different subscription
 resource "azapi_resource" "sqlmi_admin_password" {
-  count = try(var.settings.administratorLoginPassword, null) == null ? 1 : 0
+  count = 1
 
   type      = "Microsoft.KeyVault/vaults/secrets@2021-11-01-preview"
   name      = format("%s-password-v1", azurecaf_name.mssqlmi.result)
@@ -75,7 +75,7 @@ resource "azapi_resource" "sqlmi_admin_password" {
 }
 
 data "external" "sqlmi_admin_password" {
-  count      = try(var.settings.administratorLoginPassword, null) == null ? 1 : 0
+  count      = 1
   depends_on = [azapi_resource.sqlmi_admin_password]
   program = [
     "bash", "-c",

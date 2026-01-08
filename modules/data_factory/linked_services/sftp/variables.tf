@@ -27,7 +27,11 @@ variable "additional_properties" {
 }
 
 variable "authentication_type" {
-  description = "(Required) The type of authentication used to connect to the web table source. Valid options are Anonymous, Basic and ClientCertificate."
+  description = "(Required) The type of authentication used to connect to the SFTP server. Valid options are Basic and SshPublicKey."
+  validation {
+    condition = contains(["Basic", "SshPublicKey"], var.authentication_type)
+    error_message = "Authentication type must be either 'Basic' (password) or 'SshPublicKey' (SSH key authentication). SshPublicKey is recommended for better security."
+  }
 }
 
 variable "host" {
@@ -43,5 +47,29 @@ variable "username" {
 }
 
 variable "password" {
-  description = "(Required) Password to logon to the SFTP Server for Basic Authentication."
+  description = "(Optional) Password to logon to the SFTP Server for Basic Authentication. Required when authentication_type is 'Basic'."
+  default     = null
+  sensitive   = true
+}
+
+variable "private_key_path" {
+  description = "(Optional) Path to the SSH private key for SshPublicKey authentication. Required when authentication_type is 'SshPublicKey'."
+  default     = null
+}
+
+variable "private_key_content" {
+  description = "(Optional) Content of the SSH private key for SshPublicKey authentication. Required when authentication_type is 'SshPublicKey'."
+  default     = null
+  sensitive   = true
+}
+
+variable "private_key_passphrase" {
+  description = "(Optional) Passphrase for the SSH private key if it's encrypted."
+  default     = null
+  sensitive   = true
+}
+
+variable "host_key_fingerprint" {
+  description = "(Optional) The host key fingerprint of the SFTP server."
+  default     = null
 }

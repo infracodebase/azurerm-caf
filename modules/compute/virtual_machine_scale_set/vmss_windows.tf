@@ -319,35 +319,21 @@ resource "azurerm_key_vault_secret" "admin_password" {
 #
 
 locals {
-  admin_username = try(data.external.windows_admin_username.0.result.value, null)
-  admin_password = try(data.external.windows_admin_password.0.result.value, null)
+  admin_username = try(data.azurerm_key_vault_secret.windows_admin_username.0.value, null)
+  admin_password = try(data.azurerm_key_vault_secret.windows_admin_password.0.value, null)
 }
 
 #
-# Use data external to retrieve value from different subscription
+# Use native Terraform data sources to retrieve secrets from Key Vault (replaces external scripts)
 #
-# With for_each it is not possible to change the provider's subscription at runtime so using the following pattern.
-#
-data "external" "windows_admin_username" {
-  count = try(var.settings.vmss_settings["windows"].admin_username_key, null) == null ? 0 : 1
-  program = [
-    "bash", "-c",
-    format(
-      "az keyvault secret show --name '%s' --vault-name '%s' --query '{value: value }' -o json",
-      var.settings.vmss_settings["windows"].admin_username_key,
-      local.keyvault.name
-    )
-  ]
+data "azurerm_key_vault_secret" "windows_admin_username" {
+  count        = try(var.settings.vmss_settings["windows"].admin_username_key, null) == null ? 0 : 1
+  name         = var.settings.vmss_settings["windows"].admin_username_key
+  key_vault_id = local.keyvault.id
 }
 
-data "external" "windows_admin_password" {
-  count = try(var.settings.vmss_settings["windows"].admin_password_key, null) == null ? 0 : 1
-  program = [
-    "bash", "-c",
-    format(
-      "az keyvault secret show -n '%s' --vault-name '%s' --query '{value: value }' -o json",
-      var.settings.vmss_settings["windows"].admin_password_key,
-      local.keyvault.name
-    )
-  ]
+data "azurerm_key_vault_secret" "windows_admin_password" {
+  count        = try(var.settings.vmss_settings["windows"].admin_password_key, null) == null ? 0 : 1
+  name         = var.settings.vmss_settings["windows"].admin_password_key
+  key_vault_id = local.keyvault.id
 }

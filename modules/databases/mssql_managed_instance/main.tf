@@ -35,7 +35,7 @@ locals {
       value = var.settings.administratorLogin
     }
     administratorLoginPassword = {
-      value = can(var.settings.administratorLoginPassword) ? var.settings.administratorLoginPassword : data.external.sqlmi_admin_password.0.result.value
+      value = data.external.sqlmi_admin_password.0.result.value
     }
     subnetId = {
       value = var.subnet_id

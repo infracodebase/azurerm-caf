@@ -7,7 +7,7 @@ resource "azurerm_mysql_server" "mysql" {
   sku_name            = var.settings.sku_name
 
   administrator_login          = var.settings.administrator_login
-  administrator_login_password = try(var.settings.administrator_login_password, azurerm_key_vault_secret.mysql_admin_password.0.value)
+  administrator_login_password = azurerm_key_vault_secret.mysql_admin_password.0.value
 
   auto_grow_enabled                 = try(var.settings.auto_grow_enabled, true)
   storage_mb                        = var.settings.storage_mb
@@ -41,9 +41,9 @@ resource "azurecaf_name" "mysql" {
   passthrough   = var.global_settings.passthrough
 }
 
-# Generate sql server random admin password if not provided in the attribute administrator_login_password
+# Generate MySQL server random admin password (always generated for security)
 resource "random_password" "mysql_admin" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   length           = 32
   special          = true
@@ -53,7 +53,7 @@ resource "random_password" "mysql_admin" {
 
 # Store the generated password into keyvault
 resource "azurerm_key_vault_secret" "mysql_admin_password" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-password", azurecaf_name.mysql.result)
   value        = random_password.mysql_admin.0.result
@@ -67,7 +67,7 @@ resource "azurerm_key_vault_secret" "mysql_admin_password" {
 }
 
 resource "azurerm_key_vault_secret" "sql_admin" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-username", azurecaf_name.mysql.result)
   value        = var.settings.administrator_login
@@ -75,7 +75,7 @@ resource "azurerm_key_vault_secret" "sql_admin" {
 }
 
 resource "azurerm_key_vault_secret" "mysql_admin_login_name" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-login-name", azurecaf_name.mysql.result)
   value        = format("%s@%s", var.settings.administrator_login, azurerm_mysql_server.mysql.fqdn)
@@ -83,7 +83,7 @@ resource "azurerm_key_vault_secret" "mysql_admin_login_name" {
 }
 
 resource "azurerm_key_vault_secret" "mysql_fqdn" {
-  count = try(var.settings.administrator_login_password, null) == null ? 1 : 0
+  count = 1
 
   name         = format("%s-fqdn", azurecaf_name.mysql.result)
   value        = azurerm_mysql_server.mysql.fqdn

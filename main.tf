@@ -21,14 +21,15 @@ terraform {
       version = "~> 1.2.0"
     }
     null = {
-      source = "hashicorp/null"
+      source  = "hashicorp/null"
+      version = "~> 3.2.0"
     }
     random = {
       version = "~> 3.5.1"
       source  = "hashicorp/random"
     }
   }
-  required_version = ">= 1.3.5"
+  required_version = "~> 1.3"
 }
 
 provider "azapi" {
